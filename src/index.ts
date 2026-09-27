@@ -6,34 +6,32 @@ import { classify } from "./classify.js";
 import { extractMetadata } from "./extract.js";
 import { runExtractors } from "./extractors/registry.js";
 import { renderMarkdown } from "./markdown.js";
-import { saveScreenshotFile, screenshotToInlineDataUri } from "./screenshot.js";
-import type { ScreenshotMode } from "./types.js";
+import { buildRecord } from "./record.js";
+import { saveScreenshotFile, screenshotThumbnail } from "./screenshot.js";
+
+type OutputFormat = "json" | "markdown" | "raw";
 
 const program = new Command();
 
 program
   .name("mdlinks")
-  .description("Turn a URL into a rich markdown link with title, description, type, and a screenshot.")
+  .description("Turn a URL into a standard JSON record (title, description, category, screenshot, ...).")
   .argument("<url>", "page to fetch")
-  .option("-o, --output <file>", "write markdown to a file instead of stdout")
-  .option(
-    "--screenshot-mode <mode>",
-    "file | inline | both | none",
-    "file",
-  )
-  .option("--screenshot-dir <dir>", "directory to save screenshot files in", "./screenshots")
-  .option("--inline-max-width <px>", "max width for inline base64 screenshots", "600")
+  .option("-o, --output <file>", "write output to a file instead of stdout")
+  .option("-f, --format <format>", "json | markdown | raw (all extracted metadata, for debugging)", "json")
+  .option("--screenshot-dir <dir>", "directory to save full-size screenshot files in", "./screenshots")
+  .option("--no-save-screenshot", "don't save the full-size screenshot file (screenshotName will be empty)")
+  .option("--thumbnail-width <px>", "max width of the base64 screenshot thumbnail", "400")
   .option("--width <px>", "viewport width for the screenshot", "1920")
   .option("--height <px>", "viewport height for the screenshot", "1080")
   .option("--timeout <ms>", "navigation timeout", "30000")
   .option("--no-interactive-fallback", "don't open a visible browser window if a bot-check page is hit")
   .option("--interactive-timeout <ms>", "how long to wait for a manually-solved challenge", "120000")
-  .option("--json", "print raw extracted metadata as JSON instead of markdown", false)
   .action(async (url: string, opts) => {
-    const screenshotMode = opts.screenshotMode as ScreenshotMode;
-    const validModes: ScreenshotMode[] = ["file", "inline", "both", "none"];
-    if (!validModes.includes(screenshotMode)) {
-      console.error(`Invalid --screenshot-mode "${screenshotMode}". Expected one of: ${validModes.join(", ")}`);
+    const format = opts.format as OutputFormat;
+    const validFormats: OutputFormat[] = ["json", "markdown", "raw"];
+    if (!validFormats.includes(format)) {
+      console.error(`Invalid --format "${format}". Expected one of: ${validFormats.join(", ")}`);
       process.exit(1);
     }
 
@@ -60,28 +58,35 @@ program
         meta,
         jsonLdNode: classification.node,
       });
-      const screenshotPng = await page.screenshot({ type: "png" });
 
-      if (opts.json) {
-        console.log(JSON.stringify({ meta, classification, details }, null, 2));
-        return;
+      let output: string;
+      if (format === "raw") {
+        output = JSON.stringify({ meta, classification, details }, null, 2);
+      } else {
+        const screenshotPng = await page.screenshot({ type: "png" });
+        const record = buildRecord({
+          meta,
+          classification,
+          details,
+          screenshot: await screenshotThumbnail(screenshotPng, Number(opts.thumbnailWidth)),
+          screenshotName: opts.saveScreenshot
+            ? await saveScreenshotFile(screenshotPng, opts.screenshotDir, meta.finalUrl)
+            : "",
+        });
+        output =
+          format === "json"
+            ? JSON.stringify(record, null, 2)
+            : renderMarkdown(record, {
+                emoji: classification.emoji,
+                siteName: meta.siteName,
+                screenshotDir: opts.screenshotDir,
+              });
       }
-
-      const screenshotRefs: string[] = [];
-      if (screenshotMode === "file" || screenshotMode === "both") {
-        const filePath = await saveScreenshotFile(screenshotPng, opts.screenshotDir, meta.finalUrl);
-        screenshotRefs.push(filePath);
-      }
-      if (screenshotMode === "inline" || screenshotMode === "both") {
-        screenshotRefs.push(await screenshotToInlineDataUri(screenshotPng, Number(opts.inlineMaxWidth)));
-      }
-
-      const markdown = renderMarkdown({ meta, classification, details, screenshotRefs });
 
       if (opts.output) {
-        await writeFile(opts.output, markdown);
+        await writeFile(opts.output, output.endsWith("\n") ? output : output + "\n");
       } else {
-        console.log(markdown);
+        console.log(output.trimEnd());
       }
     } finally {
       await browser.close();

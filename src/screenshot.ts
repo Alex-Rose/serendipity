@@ -11,18 +11,19 @@ export function slugFromUrl(url: string): string {
   return slug || hostname;
 }
 
+/** Saves the full-size screenshot and returns its file name (not the full path). */
 export async function saveScreenshotFile(png: Buffer, dir: string, url: string): Promise<string> {
   await mkdir(dir, { recursive: true });
   const filename = `${slugFromUrl(url)}-${Date.now()}.png`;
-  const filePath = path.join(dir, filename);
-  await writeFile(filePath, png);
-  return filePath;
+  await writeFile(path.join(dir, filename), png);
+  return filename;
 }
 
-export async function screenshotToInlineDataUri(png: Buffer, maxWidth: number): Promise<string> {
+/** Downscales the screenshot to a small JPEG thumbnail and returns it as a base64 data URI. */
+export async function screenshotThumbnail(png: Buffer, maxWidth: number): Promise<string> {
   const resized = await sharp(png)
     .resize({ width: maxWidth, withoutEnlargement: true })
-    .png({ quality: 80 })
+    .jpeg({ quality: 70 })
     .toBuffer();
-  return `data:image/png;base64,${resized.toString("base64")}`;
+  return `data:image/jpeg;base64,${resized.toString("base64")}`;
 }

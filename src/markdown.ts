@@ -1,38 +1,38 @@
-import type { Classification } from "./classify.js";
-import type { RawMetadata } from "./types.js";
+import path from "node:path";
+import type { LinkRecord } from "./types.js";
 
 export interface RenderOptions {
-  meta: RawMetadata;
-  classification: Classification;
-  details: Record<string, string>;
-  screenshotRefs: string[];
+  emoji: string;
+  siteName: string | null;
+  /** Directory the screenshot file lives in, used to build the image link. */
+  screenshotDir: string;
 }
 
-export function renderMarkdown({ meta, classification, details, screenshotRefs }: RenderOptions): string {
-  const title = meta.ogTitle ?? meta.title ?? meta.finalUrl;
-  const description = meta.ogDescription ?? meta.description;
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+export function renderMarkdown(record: LinkRecord, { emoji, siteName, screenshotDir }: RenderOptions): string {
   const lines: string[] = [];
 
-  lines.push(`### [${title}](${meta.finalUrl})`);
+  lines.push(`### [${record.title || record.url}](${record.url})`);
   lines.push("");
 
-  if (description) {
-    lines.push(`> ${description}`);
+  if (record.description) {
+    lines.push(`> ${record.description}`);
     lines.push("");
   }
 
-  const summaryBits = [`**Type:** ${classification.emoji} ${classification.type}`];
-  if (meta.siteName) summaryBits.push(`**Site:** ${meta.siteName}`);
+  const summaryBits = [`**Type:** ${emoji} ${record.category}`];
+  if (siteName) summaryBits.push(`**Site:** ${siteName}`);
   lines.push(summaryBits.join(" · "));
 
-  const detailEntries = Object.entries(details);
+  const detailEntries = Object.entries(record.metadata);
   if (detailEntries.length > 0) {
-    lines.push(detailEntries.map(([k, v]) => `**${k}:** ${v}`).join(" · "));
+    lines.push(detailEntries.map(([k, v]) => `**${capitalize(k)}:** ${v}`).join(" · "));
   }
   lines.push("");
 
-  for (const ref of screenshotRefs) {
-    lines.push(`![screenshot](${ref})`);
+  if (record.screenshotName) {
+    lines.push(`![screenshot](${path.join(screenshotDir, record.screenshotName)})`);
     lines.push("");
   }
 

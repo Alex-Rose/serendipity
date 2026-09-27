@@ -18,10 +18,10 @@ export const genericExtractor: Extractor = {
     const published = (jsonLdNode?.datePublished as string | undefined) ?? meta.publishedTime ?? undefined;
     const modified = (jsonLdNode?.dateModified as string | undefined) ?? meta.modifiedTime ?? undefined;
 
-    if (author) details.Author = author;
-    if (published) details.Published = published.slice(0, 10);
+    if (author?.trim()) details.author = author.trim();
+    if (published) details.published = published.slice(0, 10);
     if (modified && modified.slice(0, 10) !== published?.slice(0, 10)) {
-      details.Updated = modified.slice(0, 10);
+      details.updated = modified.slice(0, 10);
     }
 
     return details;

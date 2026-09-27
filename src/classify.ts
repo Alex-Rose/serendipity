@@ -1,27 +1,30 @@
 export interface Classification {
+  /** Schema.org type the classification was based on. */
   type: string;
+  /** Stable lowercase slug used as the output's `category`. */
+  category: string;
   emoji: string;
   node: Record<string, unknown> | null;
 }
 
 // Checked in order; the first schema.org type found in the page's JSON-LD wins.
 // Specific content types are listed before generic containers like WebPage.
-const TYPE_PRIORITY: Array<{ type: string; emoji: string }> = [
-  { type: "Recipe", emoji: "🍳" },
-  { type: "Movie", emoji: "🎬" },
-  { type: "TVSeries", emoji: "📺" },
-  { type: "TVEpisode", emoji: "📺" },
-  { type: "VideoObject", emoji: "🎥" },
-  { type: "MusicRecording", emoji: "🎵" },
-  { type: "Book", emoji: "📖" },
-  { type: "Product", emoji: "🛒" },
-  { type: "Event", emoji: "📅" },
-  { type: "NewsArticle", emoji: "📰" },
-  { type: "BlogPosting", emoji: "📝" },
-  { type: "Article", emoji: "📄" },
-  { type: "Person", emoji: "👤" },
-  { type: "Organization", emoji: "🏢" },
-  { type: "WebPage", emoji: "🌐" },
+const TYPE_PRIORITY: Array<{ type: string; category: string; emoji: string }> = [
+  { type: "Recipe", category: "recipe", emoji: "🍳" },
+  { type: "Movie", category: "movie", emoji: "🎬" },
+  { type: "TVSeries", category: "tv-series", emoji: "📺" },
+  { type: "TVEpisode", category: "tv-episode", emoji: "📺" },
+  { type: "VideoObject", category: "video", emoji: "🎥" },
+  { type: "MusicRecording", category: "music", emoji: "🎵" },
+  { type: "Book", category: "book", emoji: "📖" },
+  { type: "Product", category: "product", emoji: "🛒" },
+  { type: "Event", category: "event", emoji: "📅" },
+  { type: "NewsArticle", category: "news-article", emoji: "📰" },
+  { type: "BlogPosting", category: "blog-post", emoji: "📝" },
+  { type: "Article", category: "article", emoji: "📄" },
+  { type: "Person", category: "person", emoji: "👤" },
+  { type: "Organization", category: "organization", emoji: "🏢" },
+  { type: "WebPage", category: "webpage", emoji: "🌐" },
 ];
 
 function typesOf(node: Record<string, unknown>): string[] {
@@ -50,9 +53,9 @@ function flatten(nodes: unknown[]): Record<string, unknown>[] {
 
 export function classify(jsonLd: unknown[]): Classification {
   const flat = flatten(jsonLd);
-  for (const { type, emoji } of TYPE_PRIORITY) {
+  for (const { type, category, emoji } of TYPE_PRIORITY) {
     const node = flat.find((n) => typesOf(n).includes(type));
-    if (node) return { type, emoji, node };
+    if (node) return { type, category, emoji, node };
   }
-  return { type: "WebPage", emoji: "🌐", node: null };
+  return { type: "WebPage", category: "webpage", emoji: "🌐", node: null };
 }
