@@ -1,0 +1,23 @@
+#!/bin/sh
+# Blocks the commit if the staged changes contain credentials or PII.
+# Rules live in .gitleaks.toml. Enabled by `npm install` (see "prepare" in
+# package.json) or manually with: git config core.hooksPath .githooks
+
+root=$(git rev-parse --show-toplevel)
+
+if command -v gitleaks >/dev/null 2>&1; then
+  set -- gitleaks
+elif command -v mise >/dev/null 2>&1 && mise which gitleaks >/dev/null 2>&1; then
+  set -- mise exec -- gitleaks
+else
+  echo "pre-commit: gitleaks is not installed, refusing to commit unscanned changes." >&2
+  echo "pre-commit: run 'mise install' in the repo (or install gitleaks another way)." >&2
+  exit 1
+fi
+
+if ! "$@" git --pre-commit --staged --redact --no-banner --config "$root/.gitleaks.toml" "$root"; then
+  echo "" >&2
+  echo "pre-commit: possible credentials or PII in staged changes (see above)." >&2
+  echo "pre-commit: remove them, or allowlist a false positive in .gitleaks.toml." >&2
+  exit 1
+fi

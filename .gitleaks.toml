@@ -1,0 +1,40 @@
+# Secret + PII scanning for the pre-commit hook (.githooks/pre-commit).
+# Credentials are covered by gitleaks' built-in rules; the rules below add PII.
+# To allow a known-safe match, prefer a narrow regex in the rule's allowlist,
+# or add `gitleaks:allow` as a trailing comment on that line.
+
+title = "serendipity"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "pii-email"
+description = "Email address"
+regex = '''\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'''
+
+  [[rules.allowlists]]
+  description = "No-reply, placeholder and git-over-ssh addresses"
+  regexTarget = "match"
+  regexes = [
+    '''(?i)no-?reply''',
+    '''(?i)@(example|test|localhost)\.''',
+    '''(?i)@[a-z0-9.-]*\.(example|test|invalid|localhost)\b''',
+    '''^git@''',
+    '''@\d+x\.(png|jpe?g|webp|gif|svg)$''',
+  ]
+
+[[rules]]
+id = "pii-phone-number"
+description = "Phone number (North American formatted, or international with +)"
+regex = '''(?:\+1[ .-]?)?\(?\b[2-9]\d{2}\)?[ .-]\d{3}[ .-]\d{4}\b|\+[1-9]\d{0,2}[ .-]\d{1,4}[ .-]\d{2,4}[ .-]\d{2,4}(?:[ .-]\d{2,4})?\b'''
+
+[[rules]]
+id = "pii-us-ssn"
+description = "US Social Security number"
+regex = '''\b\d{3}-\d{2}-\d{4}\b'''
+
+[[rules]]
+id = "pii-credit-card"
+description = "Payment card number"
+regex = '''\b(?:4\d{3}|5[1-5]\d{2}|2[2-7]\d{2}|3[47]\d{2}|6011)(?:[ -]?\d{4}){2}[ -]?\d{3,4}\b'''
