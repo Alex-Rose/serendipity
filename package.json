@@ -1,7 +1,12 @@
 {
-  "name": "mdlinks",
+  "name": "serendipity",
   "version": "0.1.0",
-  "description": "Turn a URL into a rich markdown link: title, description, type, and a screenshot.",
+  "description": "Rediscover links you saved: a page of random, rich suggestions from your own bookmarks.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alex-Rose/serendipity.git"
+  },
   "type": "module",
   "bin": {
     "mdlinks": "./dist/index.js"
@@ -9,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
-    "postinstall": "playwright install chromium"
+    "postinstall": "playwright install chromium",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "commander": "^12.1.0",
