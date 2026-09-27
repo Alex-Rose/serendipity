@@ -103,9 +103,16 @@ node dist/index.js https://example.com                 # JSON record to stdout
 node dist/index.js https://example.com -f markdown     # markdown link card
 node dist/index.js https://example.com -o link.json    # write to a file
 node dist/index.js https://example.com -d ../web/dashboards/<id>   # add to a dashboard
+node dist/index.js -i urls.txt -d ../web/dashboards/<id>           # add many at once
 ```
 
 Useful options (see `--help` for all):
+
+- `-i, --input <file>`: capture every URL in a file, one per line. All lines
+  are checked before anything is fetched: blank lines and `# comments` are
+  skipped, lines that aren't `http(s)` URLs are skipped with a warning, and
+  duplicates are dropped. A page that fails to load doesn't stop the rest;
+  the exit code is 1 if any failed. Without `-d`, the output is a JSON array.
 
 - `-d, --dashboard <dir>`: add the link to a dashboard's `links.json` and save
   its screenshot in the dashboard's `screenshots/`. Links already in the

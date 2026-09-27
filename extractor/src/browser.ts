@@ -70,31 +70,32 @@ export interface OpenPageOptions {
  * re-opens the same URL in a visible window and waits for a human to clear it.
  */
 export async function openResolvedPage(url: string, opts: OpenPageOptions): Promise<LaunchedPage> {
-  let { browser, page } = await launchStealthPage(opts.width, opts.height, true);
-  await navigate(page, url, opts.timeoutMs);
+  let launched = await launchStealthPage(opts.width, opts.height, true);
+  // Any failure below (navigation error, timeout, unsolved challenge) must
+  // close the browser, or it keeps the process alive.
+  try {
+    await navigate(launched.page, url, opts.timeoutMs);
+    if (!(await looksLikeChallengePage(launched.page))) return launched;
 
-  if (!(await looksLikeChallengePage(page))) {
-    return { browser, page };
+    if (!opts.interactiveFallback) {
+      throw new Error(
+        `"${url}" looks like a bot-check page and stealth mode didn't get past it. ` +
+          `Omit --no-interactive-fallback to solve it manually in a visible browser window.`,
+      );
+    }
+
+    console.error("Bot-check detected — opening a visible browser window. Solve it there to continue...");
+    await launched.browser.close();
+    launched = await launchStealthPage(opts.width, opts.height, false);
+    await navigate(launched.page, url, opts.timeoutMs);
+
+    if (!(await waitForChallengeToClear(launched.page, opts.interactiveTimeoutMs))) {
+      throw new Error(`Timed out waiting for the challenge on "${url}" to be solved.`);
+    }
+    console.error("Challenge cleared, continuing...");
+    return launched;
+  } catch (err) {
+    await launched.browser.close().catch(() => {});
+    throw err;
   }
-
-  if (!opts.interactiveFallback) {
-    await browser.close();
-    throw new Error(
-      `"${url}" looks like a bot-check page and stealth mode didn't get past it. ` +
-        `Omit --no-interactive-fallback to solve it manually in a visible browser window.`,
-    );
-  }
-
-  console.error("Bot-check detected — opening a visible browser window. Solve it there to continue...");
-  await browser.close();
-  ({ browser, page } = await launchStealthPage(opts.width, opts.height, false));
-  await navigate(page, url, opts.timeoutMs);
-
-  const cleared = await waitForChallengeToClear(page, opts.interactiveTimeoutMs);
-  if (!cleared) {
-    await browser.close();
-    throw new Error(`Timed out waiting for the challenge on "${url}" to be solved.`);
-  }
-  console.error("Challenge cleared, continuing...");
-  return { browser, page };
 }
