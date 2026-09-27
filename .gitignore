@@ -2,3 +2,7 @@ node_modules/
 dist/
 screenshots/
 *.log
+
+# Dashboards are personal data: only the demo is committed.
+web/dashboards/*
+!web/dashboards/demo/
