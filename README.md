@@ -11,17 +11,24 @@ random handful, so you stumble back onto things you once found worth keeping.
 
 Early days. What exists today:
 
-- **Link ingestion (`mdlinks` CLI):** takes a URL, loads it in a headless
-  browser, and produces a standard JSON record with a title, description,
+- **Extractor (`extractor/`):** takes a URL, loads it in a headless browser,
+  and captures it as a standard JSON record with a title, description,
   category and a screenshot thumbnail.
 
 Planned:
 
-- **Suggestions page:** a web page showing a random subset of saved links as
-  rich cards.
+- **Suggestions page:** a web page / service showing a random subset of
+  saved links as rich cards.
 - **Category-specific metadata** for the kinds of links we decide to support
   (movies, books, git / FOSS projects, ...).
 - A way to save links and keep the collection.
+
+## Repository layout
+
+| Path          | What                                                          |
+| ------------- | ------------------------------------------------------------- |
+| `extractor/`  | CLI that captures a URL as a link record (TypeScript, Playwright). |
+| `.githooks/`  | Git hooks shared by the whole repo (secret / PII scanning).   |
 
 ## The link record
 
@@ -54,9 +61,11 @@ present; any of them may be an empty string when the page doesn't provide it.
 
 ## Usage
 
-Requires Node.js. `npm install` also downloads Playwright's Chromium.
+The extractor lives in `extractor/`. It requires Node.js, and `npm install`
+also downloads Playwright's Chromium.
 
 ```sh
+cd extractor
 npm install
 npm run build
 
@@ -84,8 +93,8 @@ and blocks commits that contain credentials or personal data (emails, phone
 numbers, SSNs, card numbers). Rules are in `.gitleaks.toml`.
 
 ```sh
-mise install    # installs the pinned gitleaks version (see mise.toml)
-npm install     # also points git at .githooks/ via the "prepare" script
+mise install                  # installs the pinned gitleaks version (see mise.toml)
+(cd extractor && npm install) # also points git at .githooks/ via the "prepare" script
 ```
 
 Without mise, install gitleaks any other way and run

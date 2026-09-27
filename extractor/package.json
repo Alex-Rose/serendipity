@@ -1,11 +1,12 @@
 {
-  "name": "serendipity",
+  "name": "serendipity-extractor",
   "version": "0.1.0",
-  "description": "Rediscover links you saved: a page of random, rich suggestions from your own bookmarks.",
+  "description": "Captures a URL as a serendipity link record: title, description, category, screenshot.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Alex-Rose/serendipity.git"
+    "url": "git+https://github.com/Alex-Rose/serendipity.git",
+    "directory": "extractor"
   },
   "type": "module",
   "bin": {
