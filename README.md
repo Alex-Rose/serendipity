@@ -13,22 +13,49 @@ Early days. What exists today:
 
 - **Extractor (`extractor/`):** takes a URL, loads it in a headless browser,
   and captures it as a standard JSON record with a title, description,
-  category and a screenshot thumbnail.
+  category and a screenshot thumbnail. It can add links straight into a
+  dashboard.
+- **Web page (`web/`):** a static site that shows a few random links from a
+  dashboard as calm, rich cards, with a "Show me others" button.
 
 Planned:
 
-- **Suggestions page:** a web page / service showing a random subset of
-  saved links as rich cards.
 - **Category-specific metadata** for the kinds of links we decide to support
   (movies, books, git / FOSS projects, ...).
-- A way to save links and keep the collection.
+- Creating and managing dashboards from the web, rather than the command line.
 
 ## Repository layout
 
-| Path          | What                                                          |
-| ------------- | ------------------------------------------------------------- |
+| Path          | What                                                               |
+| ------------- | ------------------------------------------------------------------ |
 | `extractor/`  | CLI that captures a URL as a link record (TypeScript, Playwright). |
-| `.githooks/`  | Git hooks shared by the whole repo (secret / PII scanning).   |
+| `web/`        | Static site that displays dashboards (Vite, TypeScript).           |
+| `.githooks/`  | Git hooks shared by the whole repo (secret / PII scanning).        |
+
+## Dashboards
+
+Each person gets a dashboard at a random three-word address, such as
+`https://your-site.example/amber-orbit-tulip/`. A dashboard is a folder:
+
+```
+web/dashboards/amber-orbit-tulip/
+├── links.json      { "version": 1, "links": [ <link record>, ... ] }
+└── screenshots/    full-size screenshots, named by each record's screenshotName
+```
+
+The words come from the [EFF large wordlist](https://www.eff.org/dice)
+(7,772 words once the hyphenated ones are removed), picked with a
+cryptographically secure random generator. That makes about 4.7 × 10¹¹
+possible addresses (~39 bits), enough that nobody stumbles onto a dashboard
+by guessing.
+
+There is no login: **the address is the only thing keeping a dashboard
+private.** The site never sends it to the links you open (no referrer), marks
+dashboards `noindex`, and never lists them. On your server, also disable
+directory listings and keep dashboards out of any sitemap.
+
+Dashboards are personal data, so `web/dashboards/` is ignored by git, except
+for the `demo` dashboard, which is built from public pages.
 
 ## The link record
 
@@ -61,8 +88,11 @@ present; any of them may be an empty string when the page doesn't provide it.
 
 ## Usage
 
-The extractor lives in `extractor/`. It requires Node.js, and `npm install`
-also downloads Playwright's Chromium.
+Both parts require Node.js.
+
+### Capture links (extractor)
+
+`npm install` also downloads Playwright's Chromium.
 
 ```sh
 cd extractor
@@ -72,10 +102,14 @@ npm run build
 node dist/index.js https://example.com                 # JSON record to stdout
 node dist/index.js https://example.com -f markdown     # markdown link card
 node dist/index.js https://example.com -o link.json    # write to a file
+node dist/index.js https://example.com -d ../web/dashboards/<id>   # add to a dashboard
 ```
 
 Useful options (see `--help` for all):
 
+- `-d, --dashboard <dir>`: add the link to a dashboard's `links.json` and save
+  its screenshot in the dashboard's `screenshots/`. Links already in the
+  dashboard are skipped.
 - `-f, --format json|markdown|raw`: `raw` dumps everything extracted from the
   page, which helps when designing category-specific metadata.
 - `--screenshot-dir <dir>`: where full-size screenshots go (default
@@ -85,6 +119,30 @@ Useful options (see `--help` for all):
 
 If a site shows a bot-check page, a visible browser window opens so you can
 solve it. Pass `--no-interactive-fallback` to fail instead.
+
+### Show them (web)
+
+```sh
+cd web
+npm install
+npm run new-dashboard   # creates dashboards/<word-word-word>/ and prints its URL path
+npm run dev             # http://localhost:5173/demo/
+npm run build           # static site in web/dist/
+npm run preview         # serve the built site locally
+```
+
+`npm run build` produces a fully static site: the landing page, shared assets
+in `assets/`, and one folder per dashboard with its page, `links.json` and
+screenshots. Upload `web/dist/` to any static host (a web server, Azure Blob
+Storage static website, ...). Rebuild after creating a dashboard. Adding
+links to an existing dashboard only changes its `links.json`, so copying that
+folder is enough.
+
+Dashboards are read from `web/dashboards/` by default. Set
+`SERENDIPITY_DASHBOARDS=/path/to/dashboards` to keep them elsewhere.
+
+Links need their trailing slash (`/amber-orbit-tulip/`). Most web servers
+redirect to it automatically; `vite preview` doesn't.
 
 ## Development
 
@@ -103,4 +161,6 @@ is missing.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The dashboard wordlist is the
+[EFF large wordlist](https://www.eff.org/dice), licensed
+[CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/).
