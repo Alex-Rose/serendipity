@@ -6,3 +6,5 @@ screenshots/
 # Dashboards are personal data: only the demo is committed.
 web/dashboards/*
 !web/dashboards/demo/
+# The hosted demo (GitHub Pages) needs the demo's full screenshots too.
+!web/dashboards/demo/screenshots/

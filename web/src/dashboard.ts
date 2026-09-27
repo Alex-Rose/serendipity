@@ -11,9 +11,11 @@ const greeting = document.getElementById("greeting")!;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const LEAVE_MS = 320;
 
-// The dashboard ID is the first path segment: /<word-word-word>/
-const id = location.pathname.split("/").filter(Boolean)[0] ?? "";
-const base = `/${encodeURIComponent(id)}`;
+// The dashboard ID is the first path segment after the site's base path:
+// <base><word-word-word>/
+const siteBase = import.meta.env.BASE_URL;
+const id = location.pathname.startsWith(siteBase) ? location.pathname.slice(siteBase.length).split("/")[0] : "";
+const base = `${siteBase}${encodeURIComponent(id)}`;
 
 function greetingFor(hour: number): string {
   const part = hour < 5 ? "Good evening" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";

@@ -2,6 +2,8 @@
 
 Rediscover the things you saved.
 
+**[See the demo →](https://alex-rose.github.io/serendipity/demo/)**
+
 We all save links "for later": articles, recipes, movies to watch, books to
 read, projects to try. Then we never look at them again. **serendipity** turns
 your saved links into a web page of rich suggestions. Each visit shows a
@@ -145,11 +147,22 @@ Storage static website, ...). Rebuild after creating a dashboard. Adding
 links to an existing dashboard only changes its `links.json`, so copying that
 folder is enough.
 
+To serve the site under a sub-path, set `SERENDIPITY_BASE` when building, e.g.
+`SERENDIPITY_BASE=/serendipity/ npm run build`.
+
 Dashboards are read from `web/dashboards/` by default. Set
 `SERENDIPITY_DASHBOARDS=/path/to/dashboards` to keep them elsewhere.
 
 Links need their trailing slash (`/amber-orbit-tulip/`). Most web servers
 redirect to it automatically; `vite preview` doesn't.
+
+### Demo on GitHub Pages
+
+The [demo](https://alex-rose.github.io/serendipity/demo/) is the `demo`
+dashboard, built and published by `.github/workflows/pages.yml` on every push
+to `master` that touches `web/`. The workflow builds from what's in git, and
+only the demo dashboard is committed, so personal dashboards are never
+published. Its screenshots are committed as WebP to keep the repo small.
 
 ## Development
 
