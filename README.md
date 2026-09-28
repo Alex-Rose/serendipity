@@ -119,6 +119,7 @@ node dist/index.js https://example.com -f markdown     # markdown link card
 node dist/index.js https://example.com -o link.json    # write to a file
 node dist/index.js https://example.com -d ../web/dashboards/<id>   # add to a dashboard
 node dist/index.js -i urls.txt -d ../web/dashboards/<id>           # add many at once
+node dist/index.js -i urls.txt -d ../web/dashboards/<id> -r        # re-capture ones already there
 ```
 
 Useful options (see `--help` for all):
@@ -131,7 +132,12 @@ Useful options (see `--help` for all):
 
 - `-d, --dashboard <dir>`: add the link to a dashboard's `links.json` and save
   its screenshot in the dashboard's `screenshots/`. Links already in the
-  dashboard are skipped.
+  dashboard are skipped without loading the page. The match ignores `http` vs
+  `https`, a leading `www.`, the `#fragment` and a trailing slash. A URL that
+  redirects to a saved link is caught once the page has loaded.
+- `-r, --refresh`: with `-d`, capture links the dashboard already has again
+  and replace their records. Each keeps its original `dateAdded`, and its old
+  screenshot file is deleted.
 - `-f, --format json|markdown|raw`: `raw` dumps everything extracted from the
   page, which helps when designing category-specific metadata.
 - `--screenshot-dir <dir>`: where full-size screenshots go (default

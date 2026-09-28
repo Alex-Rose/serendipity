@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ObjectId, type WithId } from "mongodb";
-import { parseWebUrl } from "serendipity-extractor";
+import { parseWebUrl, urlKey } from "serendipity-extractor";
 import { requireUser } from "./auth.ts";
 import { captureLink, deleteScreenshot, isPublicWebUrl } from "./capture.ts";
 import { config } from "./config.ts";
@@ -50,7 +50,8 @@ linkRoutes.post("/", async (req, res) => {
     return;
   }
 
-  const isKnown = async (candidate: string) => (await links().countDocuments({ userId, url: candidate }, { limit: 1 })) > 0;
+  const isKnown = async (candidate: string) =>
+    (await links().countDocuments({ userId, urlKey: urlKey(candidate) }, { limit: 1 })) > 0;
   if (await isKnown(url)) {
     res.status(409).json({ error: "That link is already on your page." });
     return;
@@ -59,7 +60,7 @@ linkRoutes.post("/", async (req, res) => {
   // If the page can't be loaded, the link is still saved: the person can fill
   // in a title themselves. Saving shouldn't depend on someone else's website.
   let warning: string | undefined;
-  let record: Omit<Link, "_id" | "userId" | "dateAdded">;
+  let record: Omit<Link, "_id" | "userId" | "urlKey" | "dateAdded">;
   const bare = { url, title: "", description: "", category: "webpage", screenshotName: "", screenshot: "", metadata: {} };
   if (!config.capture) {
     record = bare;
@@ -78,7 +79,7 @@ linkRoutes.post("/", async (req, res) => {
     }
   }
 
-  const link: Link = { ...record, _id: new ObjectId(), userId, dateAdded: new Date() };
+  const link: Link = { ...record, _id: new ObjectId(), userId, urlKey: urlKey(record.url), dateAdded: new Date() };
   try {
     await links().insertOne(link);
   } catch (err) {

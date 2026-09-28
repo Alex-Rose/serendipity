@@ -100,11 +100,18 @@ kept in memory, per instance.
 | --------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `users`               | Username (lowercase, unique), scrypt password hash, the page's three-word `slug` (unique), creation date. |
 | `sessions`            | SHA-256 of each session token, the user, and an expiry (30 days). A TTL index removes expired sessions.   |
-| `links`               | One document per saved link: the extractor's [link record](../README.md#the-link-record) plus `userId`.   |
+| `links`               | One document per saved link: the extractor's [link record](../README.md#the-link-record) plus `userId` and `urlKey` (see below). |
 | `screenshots` (GridFS)| Full-size screenshots as WebP (1280 px wide), named by each link's `screenshotName`.                      |
 
 A page's `/<slug>/links.json` has the same format as a static dashboard's
 `links.json`.
+
+Each link can be saved once per person. As in the extractor's `--dashboard`
+mode, two URLs count as the same page if they differ only by `http` vs
+`https`, a leading `www.`, the `#fragment` or a trailing slash; `urlKey` holds
+that normalized form and is unique per user. A URL that redirects to a saved
+link is refused once the page has loaded, before anything is extracted.
+Links saved before `urlKey` existed get it when the server starts.
 
 ## API
 

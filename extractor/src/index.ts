@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { Command } from "commander";
 import { capturePage } from "./capture.js";
-import { type DashboardFile, hasLink, readDashboard, screenshotsDir, writeDashboard } from "./dashboard.js";
+import { type DashboardFile, findLink, readDashboard, screenshotsDir, writeDashboard } from "./dashboard.js";
 import { renderMarkdown } from "./markdown.js";
 import { buildRecord } from "./record.js";
 import { saveScreenshotFile, screenshotThumbnail } from "./screenshot.js";
@@ -21,25 +22,35 @@ interface CaptureContext {
  * Captures one URL. Returns the value to print (a record, raw metadata or a
  * markdown string), or null when there's nothing to print: the link was added
  * to the dashboard or was already in it. Throws if the page can't be captured.
+ *
+ * With a dashboard, links it already has are skipped without loading the page,
+ * unless opts.refresh is set: then they're captured again and replace the old
+ * record (keeping its dateAdded).
  */
 async function capture(url: string, { opts, format, screenshotDir, dashboard }: CaptureContext): Promise<unknown> {
-  if (dashboard && hasLink(dashboard.data, url)) {
-    console.error(`Already in ${dashboard.dir}: ${url}`);
+  let existing = dashboard ? findLink(dashboard.data, url) : -1;
+  if (existing !== -1 && !opts.refresh) {
+    console.error(`Already in ${dashboard!.dir}, skipping: ${url}`);
     return null;
   }
 
-  const { meta, classification, details, screenshotPng } = await capturePage(url, {
+  const captured = await capturePage(url, {
     width: Number(opts.width),
     height: Number(opts.height),
     timeoutMs: Number(opts.timeout),
     interactiveFallback: opts.interactiveFallback,
     interactiveTimeoutMs: Number(opts.interactiveTimeout),
+    // A redirect can land on a page the dashboard already has under its final URL.
+    shouldExtract: (finalUrl) => {
+      if (!dashboard || existing !== -1) return true;
+      existing = findLink(dashboard.data, finalUrl);
+      if (existing === -1 || opts.refresh) return true;
+      console.error(`Already in ${dashboard.dir}, skipping: ${finalUrl}`);
+      return false;
+    },
   });
-
-  if (dashboard && hasLink(dashboard.data, meta.finalUrl)) {
-    console.error(`Already in ${dashboard.dir}: ${meta.finalUrl}`);
-    return null;
-  }
+  if (!captured) return null;
+  const { meta, classification, details, screenshotPng } = captured;
 
   if (format === "raw" && !dashboard) return { meta, classification, details };
 
@@ -52,9 +63,20 @@ async function capture(url: string, { opts, format, screenshotDir, dashboard }: 
   });
 
   if (dashboard) {
-    dashboard.data.links.push(record);
-    await writeDashboard(dashboard.dir, dashboard.data);
-    console.error(`Added to ${dashboard.dir} (${dashboard.data.links.length} links): ${record.title || record.url}`);
+    if (existing === -1) {
+      dashboard.data.links.push(record);
+      await writeDashboard(dashboard.dir, dashboard.data);
+      console.error(`Added to ${dashboard.dir} (${dashboard.data.links.length} links): ${record.title || record.url}`);
+    } else {
+      const old = dashboard.data.links[existing];
+      dashboard.data.links[existing] = { ...record, dateAdded: old.dateAdded };
+      await writeDashboard(dashboard.dir, dashboard.data);
+      // Only after links.json no longer points at it.
+      if (old.screenshotName && old.screenshotName !== record.screenshotName) {
+        await rm(path.join(screenshotDir, path.basename(old.screenshotName)), { force: true });
+      }
+      console.error(`Refreshed in ${dashboard.dir}: ${record.title || record.url}`);
+    }
     return null;
   }
 
@@ -75,6 +97,7 @@ program
     "-d, --dashboard <dir>",
     "add the link to a dashboard folder (its links.json and screenshots/) instead of printing it",
   )
+  .option("-r, --refresh", "with --dashboard, capture links it already has again and replace their records")
   .option("--screenshot-dir <dir>", "directory to save full-size screenshot files in", "./screenshots")
   .option("--no-save-screenshot", "don't save the full-size screenshot file (screenshotName will be empty)")
   .option("--thumbnail-width <px>", "max width of the base64 screenshot thumbnail", "400")
@@ -92,6 +115,11 @@ program
     }
     if (Boolean(urlArg) === Boolean(opts.input)) {
       console.error("Pass either a URL or --input <file>, not both.");
+      process.exit(1);
+    }
+
+    if (opts.refresh && !opts.dashboard) {
+      console.error("--refresh only applies with --dashboard.");
       process.exit(1);
     }
 

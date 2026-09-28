@@ -34,6 +34,23 @@ export async function writeDashboard(dir: string, data: DashboardFile): Promise<
   await rename(tmp, linksPath(dir));
 }
 
-export function hasLink(data: DashboardFile, url: string): boolean {
-  return data.links.some((link) => link.url === url);
+/**
+ * Key used to spot the same page saved twice: ignores the scheme, a leading
+ * "www.", the #fragment and a trailing slash, which rarely change the page.
+ */
+export function urlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.host.toLowerCase().replace(/^www\./, "");
+    const pathname = u.pathname.replace(/\/+$/, "");
+    return `${host}${pathname}${u.search}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Index of the dashboard link for the same page as `url`, or -1. */
+export function findLink(data: DashboardFile, url: string): number {
+  const key = urlKey(url);
+  return data.links.findIndex((link) => urlKey(link.url) === key);
 }

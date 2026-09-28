@@ -1,4 +1,5 @@
 import { GridFSBucket, type Db, MongoClient, type ObjectId } from "mongodb";
+import { urlKey } from "serendipity-extractor";
 import { config } from "./config.ts";
 
 export interface User {
@@ -23,6 +24,8 @@ export interface Link {
   _id: ObjectId;
   userId: ObjectId;
   url: string;
+  /** The extractor's urlKey(url), so the same page under a slightly different URL counts as saved. */
+  urlKey: string;
   title: string;
   description: string;
   category: string;
@@ -40,14 +43,26 @@ let db: Db;
 export async function connect(): Promise<void> {
   await client.connect();
   db = client.db();
+  await backfillUrlKeys();
   await Promise.all([
     users().createIndex({ username: 1 }, { unique: true }),
     users().createIndex({ slug: 1 }, { unique: true }),
     sessions().createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-    links().createIndex({ userId: 1, url: 1 }, { unique: true }),
+    links().createIndex({ userId: 1, urlKey: 1 }, { unique: true }),
     links().createIndex({ userId: 1, dateAdded: -1 }),
     db.collection("screenshots.files").createIndex({ filename: 1, "metadata.userId": 1 }),
   ]);
+}
+
+/** Links saved before urlKey existed: add it, and drop the old exact-URL unique index. */
+async function backfillUrlKeys(): Promise<void> {
+  const missing = await links().find({ urlKey: { $exists: false } }, { projection: { url: 1 } }).toArray();
+  if (missing.length > 0) {
+    await links().bulkWrite(
+      missing.map(({ _id, url }) => ({ updateOne: { filter: { _id }, update: { $set: { urlKey: urlKey(url) } } } })),
+    );
+  }
+  if (await links().indexExists("userId_1_url_1").catch(() => false)) await links().dropIndex("userId_1_url_1");
 }
 
 export const disconnect = () => client.close();

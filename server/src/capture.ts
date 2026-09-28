@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
-import { buildRecord, capturePage, type LinkRecord, screenshotThumbnail, screenshotWebp, slugFromUrl } from "serendipity-extractor";
+import { buildRecord, capturePage, type LinkRecord, screenshotThumbnail, screenshotWebp, slugFromUrl, urlKey } from "serendipity-extractor";
 import type { ObjectId } from "mongodb";
 import { config } from "./config.ts";
 import { screenshots } from "./db.ts";
@@ -60,8 +60,8 @@ const FULL_SCREENSHOT_WIDTH = 1280;
 
 /**
  * Loads the page and returns its link record, with the full-size screenshot
- * stored in GridFS. `isKnown` is checked against the final URL (after
- * redirects) before anything is stored, so duplicates don't leave orphans.
+ * stored in GridFS. If the page redirected, `isKnown` is checked against the
+ * final URL before anything is extracted or stored.
  */
 export async function captureLink(
   url: string,
@@ -76,9 +76,10 @@ export async function captureLink(
       interactiveFallback: false,
       interactiveTimeoutMs: 0,
       allowRequest: isPublicWebUrl,
+      shouldExtract: async (finalUrl) => urlKey(finalUrl) === urlKey(url) || !(await isKnown(finalUrl)),
     }),
   );
-  if (page.meta.finalUrl !== url && (await isKnown(page.meta.finalUrl))) return "duplicate";
+  if (!page) return "duplicate";
 
   const screenshotName = `${slugFromUrl(page.meta.finalUrl)}-${Date.now()}.webp`;
   const webp = await screenshotWebp(page.screenshotPng, FULL_SCREENSHOT_WIDTH);
