@@ -9,6 +9,12 @@ title = "serendipity"
 useDefault = true
 
 [[rules]]
+id = "azure-sas-token"
+description = "Azure shared access signature (the sig= HMAC in a SAS token or URL)"
+regex = '''[?&]sig=[A-Za-z0-9%+/]{40,}'''
+keywords = ["sig="]
+
+[[rules]]
 id = "pii-email"
 description = "Email address"
 regex = '''\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'''
