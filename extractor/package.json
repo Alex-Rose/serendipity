@@ -9,6 +9,12 @@
     "directory": "extractor"
   },
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "default": "./dist/lib.js"
+    }
+  },
   "bin": {
     "mdlinks": "./dist/index.js"
   },

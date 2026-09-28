@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The three-word URL is the only thing keeping a page private: never leak it. -->
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/client/favicon.svg" type="image/svg+xml" />
+    <title>serendipity</title>
+    <script type="module" src="/client/dashboard.ts"></script>
+  </head>
+  <body class="dashboard">
+    <header class="masthead">
+      <a class="wordmark" href="/">serendipity</a>
+      <p class="greeting" id="greeting"></p>
+    </header>
+    <main>
+      <section class="cards" id="cards" aria-live="polite" aria-label="Saved links"></section>
+      <p class="notice" id="notice" hidden></p>
+    </main>
+    <footer class="actions">
+      <button class="shuffle" id="shuffle" type="button" hidden>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+          <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Show me others
+      </button>
+    </footer>
+  </body>
+</html>

@@ -27,3 +27,8 @@ export async function screenshotThumbnail(png: Buffer, maxWidth: number): Promis
     .toBuffer();
   return `data:image/jpeg;base64,${resized.toString("base64")}`;
 }
+
+/** Downscales the screenshot to a WebP, much smaller than the PNG, for storing on a server. */
+export async function screenshotWebp(png: Buffer, maxWidth: number): Promise<Buffer> {
+  return sharp(png).resize({ width: maxWidth, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+}

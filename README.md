@@ -19,12 +19,24 @@ Early days. What exists today:
   dashboard.
 - **Web page (`web/`):** a static site that shows a few random links from a
   dashboard as calm, rich cards, with a "Show me others" button.
+- **Server (`server/`):** the same pages with accounts, backed by MongoDB.
+  People sign up with a username and password, get a page at a three-word
+  address, and add, edit and remove links from the browser. See
+  [server/README.md](server/README.md).
+
+There are two ways to run serendipity, and both are maintained:
+
+| | Static site (`web/`) | Server (`server/`) |
+| --- | --- | --- |
+| Hosting | Any static host (GitHub Pages, a web server, blob storage) | A Node.js server (or Docker) and MongoDB |
+| Adding links | From the command line, with the extractor | From the browser |
+| Accounts | None; you create dashboards yourself | Sign-up with username and password |
+| Best for | Yourself, or a few people you set up | Letting anyone make their own page |
 
 Planned:
 
 - **Category-specific metadata** for the kinds of links we decide to support
   (movies, books, git / FOSS projects, ...).
-- Creating and managing dashboards from the web, rather than the command line.
 
 ## Repository layout
 
@@ -32,6 +44,7 @@ Planned:
 | ------------- | ------------------------------------------------------------------ |
 | `extractor/`  | CLI that captures a URL as a link record (TypeScript, Playwright). |
 | `web/`        | Static site that displays dashboards (Vite, TypeScript).           |
+| `server/`     | Server version with accounts (Express, MongoDB); reuses `web/` and `extractor/`. |
 | `.githooks/`  | Git hooks shared by the whole repo (secret / PII scanning).        |
 
 ## Dashboards
@@ -155,6 +168,15 @@ Dashboards are read from `web/dashboards/` by default. Set
 
 Links need their trailing slash (`/amber-orbit-tulip/`). Most web servers
 redirect to it automatically; `vite preview` doesn't.
+
+### Run the server version
+
+```sh
+docker compose -f server/compose.yaml up --build   # http://localhost:3000
+```
+
+See [server/README.md](server/README.md) for running it without Docker,
+configuration and deployment.
 
 ### Demo on GitHub Pages
 

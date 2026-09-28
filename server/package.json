@@ -1,0 +1,29 @@
+{
+  "name": "serendipity-server",
+  "version": "0.1.0",
+  "description": "serendipity with accounts: people sign up, get a three-word page and manage their links from the browser. Backed by MongoDB.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "node --watch-path=src src/server.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "NODE_ENV=production node src/server.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "express": "^5.2.1",
+    "mongodb": "^7.0.0",
+    "serendipity-extractor": "file:../extractor"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}

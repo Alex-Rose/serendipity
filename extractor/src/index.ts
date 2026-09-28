@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 import { writeFile } from "node:fs/promises";
 import { Command } from "commander";
-import { openResolvedPage } from "./browser.js";
-import { classify } from "./classify.js";
+import { capturePage } from "./capture.js";
 import { type DashboardFile, hasLink, readDashboard, screenshotsDir, writeDashboard } from "./dashboard.js";
-import { extractMetadata } from "./extract.js";
-import { runExtractors } from "./extractors/registry.js";
 import { renderMarkdown } from "./markdown.js";
 import { buildRecord } from "./record.js";
 import { saveScreenshotFile, screenshotThumbnail } from "./screenshot.js";
@@ -31,7 +28,7 @@ async function capture(url: string, { opts, format, screenshotDir, dashboard }: 
     return null;
   }
 
-  const { browser, page } = await openResolvedPage(url, {
+  const { meta, classification, details, screenshotPng } = await capturePage(url, {
     width: Number(opts.width),
     height: Number(opts.height),
     timeoutMs: Number(opts.timeout),
@@ -39,43 +36,30 @@ async function capture(url: string, { opts, format, screenshotDir, dashboard }: 
     interactiveTimeoutMs: Number(opts.interactiveTimeout),
   });
 
-  try {
-    const meta = await extractMetadata(page, url);
-    const classification = classify(meta.jsonLd);
-    const details = await runExtractors(classification.type, {
-      page,
-      meta,
-      jsonLdNode: classification.node,
-    });
-
-    if (dashboard && hasLink(dashboard.data, meta.finalUrl)) {
-      console.error(`Already in ${dashboard.dir}: ${meta.finalUrl}`);
-      return null;
-    }
-
-    if (format === "raw" && !dashboard) return { meta, classification, details };
-
-    const screenshotPng = await page.screenshot({ type: "png" });
-    const record = buildRecord({
-      meta,
-      classification,
-      details,
-      screenshot: await screenshotThumbnail(screenshotPng, Number(opts.thumbnailWidth)),
-      screenshotName: opts.saveScreenshot ? await saveScreenshotFile(screenshotPng, screenshotDir, meta.finalUrl) : "",
-    });
-
-    if (dashboard) {
-      dashboard.data.links.push(record);
-      await writeDashboard(dashboard.dir, dashboard.data);
-      console.error(`Added to ${dashboard.dir} (${dashboard.data.links.length} links): ${record.title || record.url}`);
-      return null;
-    }
-
-    if (format === "json") return record;
-    return renderMarkdown(record, { emoji: classification.emoji, siteName: meta.siteName, screenshotDir });
-  } finally {
-    await browser.close();
+  if (dashboard && hasLink(dashboard.data, meta.finalUrl)) {
+    console.error(`Already in ${dashboard.dir}: ${meta.finalUrl}`);
+    return null;
   }
+
+  if (format === "raw" && !dashboard) return { meta, classification, details };
+
+  const record = buildRecord({
+    meta,
+    classification,
+    details,
+    screenshot: await screenshotThumbnail(screenshotPng, Number(opts.thumbnailWidth)),
+    screenshotName: opts.saveScreenshot ? await saveScreenshotFile(screenshotPng, screenshotDir, meta.finalUrl) : "",
+  });
+
+  if (dashboard) {
+    dashboard.data.links.push(record);
+    await writeDashboard(dashboard.dir, dashboard.data);
+    console.error(`Added to ${dashboard.dir} (${dashboard.data.links.length} links): ${record.title || record.url}`);
+    return null;
+  }
+
+  if (format === "json") return record;
+  return renderMarkdown(record, { emoji: classification.emoji, siteName: meta.siteName, screenshotDir });
 }
 
 const program = new Command();

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/client/favicon.svg" type="image/svg+xml" />
+    <title>Your links · serendipity</title>
+    <script type="module" src="/client/manage.ts"></script>
+  </head>
+  <body class="manage">
+    <header class="manage-header">
+      <span class="wordmark">serendipity</span>
+      <div class="manage-account">
+        <span id="username"></span>
+        <button class="text-button" id="logout" type="button">Log out</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="your-page" aria-labelledby="your-page-title">
+        <h1 class="manage-title" id="your-page-title">Your page</h1>
+        <div class="your-page-row">
+          <a class="your-page-link" id="page-link" target="_blank" rel="noopener"></a>
+          <button class="button" id="copy-link" type="button">Copy link</button>
+        </div>
+        <p class="manage-note">
+          Anyone with this address can see your page, and only them. Keep it to yourself or share it with people you trust.
+        </p>
+      </section>
+
+      <form class="add-link" id="add-form" novalidate>
+        <label class="visually-hidden" for="add-url">Link to save</label>
+        <input id="add-url" name="url" type="url" inputmode="url" placeholder="Paste a link to save" autocomplete="off" required />
+        <button class="button button-primary" type="submit" id="add-submit">Save</button>
+      </form>
+      <p class="form-status" id="status" role="status" aria-live="polite"></p>
+
+      <section aria-labelledby="links-title">
+        <h2 class="links-heading" id="links-title">Saved links <span id="link-count"></span></h2>
+        <ul class="link-list" id="link-list"></ul>
+        <p class="manage-empty" id="empty" hidden>Nothing saved yet. Paste a link above to add your first one.</p>
+      </section>
+    </main>
+  </body>
+</html>

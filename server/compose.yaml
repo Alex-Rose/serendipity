@@ -1,0 +1,38 @@
+# Runs the serendipity server with MongoDB:
+#
+#   docker compose -f server/compose.yaml up --build
+#
+# then open http://localhost:3000. For a public deployment, put it behind a
+# reverse proxy that terminates HTTPS and set TRUST_PROXY (see server/README.md).
+
+name: serendipity
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/serendipity
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-auto}
+      SERENDIPITY_CAPTURE: ${SERENDIPITY_CAPTURE:-on}
+      SERENDIPITY_CAPTURE_CONCURRENCY: ${SERENDIPITY_CAPTURE_CONCURRENCY:-2}
+    depends_on:
+      - mongo
+    # Chromium needs more shared memory than Docker's 64 MB default, and an
+    # init process to reap its child processes.
+    shm_size: 512mb
+    init: true
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

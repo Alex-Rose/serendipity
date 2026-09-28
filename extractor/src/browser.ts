@@ -62,6 +62,20 @@ export interface OpenPageOptions {
   timeoutMs: number;
   interactiveFallback: boolean;
   interactiveTimeoutMs: number;
+  /**
+   * Called for every request the page makes (navigations, redirects and
+   * subresources); returning false blocks it. Lets a server keep pages from
+   * reaching private addresses.
+   */
+  allowRequest?: (url: string) => boolean | Promise<boolean>;
+}
+
+async function guardRequests(page: Page, allowRequest: OpenPageOptions["allowRequest"]): Promise<void> {
+  if (!allowRequest) return;
+  await page.route("**/*", async (route) => {
+    const allowed = await Promise.resolve(allowRequest(route.request().url())).catch(() => false);
+    await (allowed ? route.continue() : route.abort("blockedbyclient"));
+  });
 }
 
 /**
@@ -74,6 +88,7 @@ export async function openResolvedPage(url: string, opts: OpenPageOptions): Prom
   // Any failure below (navigation error, timeout, unsolved challenge) must
   // close the browser, or it keeps the process alive.
   try {
+    await guardRequests(launched.page, opts.allowRequest);
     await navigate(launched.page, url, opts.timeoutMs);
     if (!(await looksLikeChallengePage(launched.page))) return launched;
 
@@ -87,6 +102,7 @@ export async function openResolvedPage(url: string, opts: OpenPageOptions): Prom
     console.error("Bot-check detected — opening a visible browser window. Solve it there to continue...");
     await launched.browser.close();
     launched = await launchStealthPage(opts.width, opts.height, false);
+    await guardRequests(launched.page, opts.allowRequest);
     await navigate(launched.page, url, opts.timeoutMs);
 
     if (!(await waitForChallengeToClear(launched.page, opts.interactiveTimeoutMs))) {

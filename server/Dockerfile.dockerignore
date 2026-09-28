@@ -1,0 +1,7 @@
+# The build context is the repository root (see Dockerfile).
+**/node_modules
+**/dist
+**/screenshots
+**/*.log
+.git
+web/dashboards

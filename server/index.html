@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="description" content="Rediscover the things you saved." />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/client/favicon.svg" type="image/svg+xml" />
+    <title>serendipity</title>
+    <script type="module" src="/client/landing.ts"></script>
+  </head>
+  <body class="landing">
+    <main class="landing-main">
+      <h1 class="wordmark wordmark-large">serendipity</h1>
+      <p class="tagline">Rediscover the things you saved.</p>
+      <div class="landing-copy">
+        <p>
+          We all save links for later: an article, a recipe, a film, a project we meant to try.
+          Later rarely comes.
+        </p>
+        <p>
+          Each time you visit your page, serendipity shows you a few of your saved links at random,
+          so the things you once found worth keeping can find their way back to you.
+        </p>
+      </div>
+
+      <form class="auth" id="auth" novalidate>
+        <div class="auth-tabs" role="tablist" aria-label="Account">
+          <button type="button" role="tab" id="tab-register" aria-selected="true" data-mode="register">Create your page</button>
+          <button type="button" role="tab" id="tab-login" aria-selected="false" data-mode="login">Log in</button>
+        </div>
+        <label class="field">
+          <span>Username</span>
+          <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_\-]+" />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="200" />
+        </label>
+        <p class="form-error" id="auth-error" role="alert" hidden></p>
+        <button class="button button-primary" type="submit" id="auth-submit">Create my page</button>
+        <p class="auth-hint" id="auth-hint">No email needed. You'll get your own page at a quiet, three-word address.</p>
+      </form>
+    </main>
+  </body>
+</html>
