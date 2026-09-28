@@ -160,7 +160,7 @@ redirect to it automatically; `vite preview` doesn't.
 
 The [demo](https://alex-rose.github.io/serendipity/demo/) is the `demo`
 dashboard, built and published by `.github/workflows/pages.yml` on every push
-to `master` that touches `web/`. The workflow builds from what's in git, and
+to `main` that touches `web/`. The workflow builds from what's in git, and
 only the demo dashboard is committed, so personal dashboards are never
 published. Its screenshots are committed as WebP to keep the repo small.
 
