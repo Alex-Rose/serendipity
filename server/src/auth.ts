@@ -91,7 +91,7 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
 // ---------- Validation ----------
 
 const USERNAME = /^[a-z0-9_-]{3,32}$/;
-const PASSWORD_MIN = 8;
+const PASSWORD_MIN = 5;
 const PASSWORD_MAX = 200;
 
 function credentials(body: unknown): { username: string; password: string } | null {

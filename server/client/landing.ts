@@ -38,7 +38,7 @@ form.addEventListener("submit", async (event) => {
 
   if (mode === "register") {
     if (!/^[A-Za-z0-9_-]{3,32}$/.test(username)) return showError("Pick a username of 3 to 32 letters, numbers, - or _.");
-    if (pass.length < 8) return showError("Use a password of at least 8 characters.");
+    if (pass.length < 5) return showError("Use a password of at least 5 characters.");
   } else if (!username || !pass) {
     return showError("Enter your username and password.");
   }
